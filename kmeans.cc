@@ -42,7 +42,6 @@ DataFrame k_means( const DataFrame& data, size_t k, size_t number_of_iterations)
 		cluster = data[i];		
 	}				   
 	vector<size_t>assignments(data.size());
-
 	for(size_t iteration = 0; iteration < number_of_iterations; iteration++){
 		// find assignements
 		for (size_t point = 0; point < data.size() ; point++){
@@ -55,8 +54,6 @@ DataFrame k_means( const DataFrame& data, size_t k, size_t number_of_iterations)
 				    best_cluster = cluster;
 				}
 			}
-
-
 		assignments[point] = best_cluster;
 		}
 		
@@ -83,19 +80,19 @@ DataFrame k_means( const DataFrame& data, size_t k, size_t number_of_iterations)
 }
 
 
-DataFrame readData(string File){
+DataFrame readData(string File,int nVariables ){
 	DataFrame data;
 	ifstream input(File);
 	string line;
 	while(getline(input,line)){
 		istringstream iss(line);
-		double x, y, z;
-		string a;
-		iss >> x >> y >> z;
+		double v;
 		Point p;
-		p.push_back(x);
-		p.push_back(y);
-		p.push_back(z);
+		for(int i = 0;i < nVariables; i++){
+			iss >> v;
+			p.push_back(v);
+			}
+
 		data.push_back(p);
 		}
 		cout << data.size() << endl;
@@ -107,15 +104,19 @@ DataFrame readData(string File){
 int main(){
 	// main para generar un data set random (mejorar con un dataset externo)
 	cout << "k_means"<< endl;
-	DataFrame data = readData("iris.data");
+	DataFrame data = readData("iris.data",2);
 	cout << data.size() << endl;
 	DataFrame c;
 	//vector<size_t> a;
 	//cout << data << endl;
 	//ScopedTimer t;
-	k_means(data,3,100);
+	cout << data[0][0]<<'|'<<data[0][1]<< endl;
+	cout << data[1][0]<<'|'<<data[1][1]<< endl;
+	cout << data[149][0]<<'|'<<data[149][1]<< endl;
+	c = k_means(data,9,100);
 	//cout << "tiempo" << t.elapsed() << endl;
-	cout << data.size() << "fin" <<endl;
+	cout << c[0].size() << "fin" <<endl;
+	cout << "hola"<< endl;
 
 	//cout << c[1] << endl;
 	return 0;
