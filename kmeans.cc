@@ -1,4 +1,4 @@
-#include "timer.hh"
+//#include "timer.hh"
 #include <tuple>
 #include <string>
 #include <fstream>
@@ -36,14 +36,16 @@ DataFrame k_means( const DataFrame& data, size_t k, size_t number_of_iterations)
 	
 	// pick centroids as random points from the dataset
 	DataFrame means(k);
+	
 	for (Point& cluster : means){ // cluster -> means
 		size_t i = indices(random_number_generator);
 		cluster = data[i];		
 	}				   
 	vector<size_t>assignments(data.size());
-	for(size_t iteration = 0; iteration < number_of_iterations; ++iteration){
+
+	for(size_t iteration = 0; iteration < number_of_iterations; iteration++){
 		// find assignements
-		for (size_t point = 0; point < data.size() ; ++point){
+		for (size_t point = 0; point < data.size() ; point++){
 			double best_distance = numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
 			size_t best_cluster = 0; // variable mejor cluster, inicializada con 0
 			for (size_t cluster = 0; cluster < k; ++cluster){
@@ -53,12 +55,15 @@ DataFrame k_means( const DataFrame& data, size_t k, size_t number_of_iterations)
 				    best_cluster = cluster;
 				}
 			}
+
+
 		assignments[point] = best_cluster;
 		}
 		
-		DataFrame new_means(k);
+		DataFrame new_means(k,vector<double>(dimensions,0.0));
 		vector<size_t> counts(k, 0);
-		for (size_t point = 0; point < data.size(); ++point){
+
+		for (size_t point = 0; point < data.size(); point++){
 		    const size_t cluster = assignments[point];
 		    for(size_t d = 0; d < dimensions; d++){
 		    	new_means[cluster][d] += data[point][d];
@@ -103,13 +108,16 @@ int main(){
 	// main para generar un data set random (mejorar con un dataset externo)
 	cout << "k_means"<< endl;
 	DataFrame data = readData("iris.data");
+	cout << data.size() << endl;
 	DataFrame c;
-	vector<size_t> a;
+	//vector<size_t> a;
 	//cout << data << endl;
-	ScopedTimer t;
-	c = k_means(data,3,100);
-	cout << "tiempo" << t.elapsed() << endl;
-	cout << a.size() << endl;
+	//ScopedTimer t;
+	k_means(data,3,100);
+	//cout << "tiempo" << t.elapsed() << endl;
+	cout << data.size() << "fin" <<endl;
+
+	//cout << c[1] << endl;
 	return 0;
 
 }
