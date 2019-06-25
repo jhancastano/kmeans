@@ -1,43 +1,50 @@
-#include <algorithm>
-#include <stdlib.h>
-#include <limits>
-#include <random>
-#include <vector>
+#include "timer.hh"
+#include <tuple>
+#include <string>
+#include <fstream>
+#include <sstream>
 #include <iostream>
+#include <vector>
+#include <random>
 
-struct Point {
-	double x{0}, y{0};	
-};
+
+using namespace std;
+
+
+using Point = vector<double>
 
 using DataFrame = std::vector<Point>;
 
-double square(double value){
+inline double square(double value){
 	return value * value;
 }
 
-double squared_12_distance(Point first, Point second){
-	return square(first.x - second.x) + square(first.y - second.y);
+inline double squared_12_distance(const Point first,const Point second){
+	double d = 0.0;
+	for(size_t dim = 0; dim < first.size();dim++){
+		d += square(first[dim]-second[dim])
+	}
+	return d;
 }
 
-DataFrame k_means( const DataFrame& data, size_t k, size_t number_of_iterations){
-					   
-	static std::random_device seed;
-	static std::mt19937 random_number_generator(seed());
-	std::uniform_int_distribution<size_t> indices(0,data.size()-1);		  
+pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t number_of_iterations){
 	
+	size_t dimensions = data[0].size();		   
+	static random_device seed;
+	static mt19937 random_number_generator(seed());
+	uniform_int_distribution<size_t> indices(0,data.size()-1);		  
 	
 	// pick centroids as random points from the dataset
 	DataFrame means(k);
-	for (auto& cluster : means){ // cluster -> means
-		cluster = data[indices(random_number_generator)];
+	for (Point& cluster : means){ // cluster -> means
+		size_t i = indices(random_number_generator);
+		cluster = data[i];		
 	}				   
-
-
-	std::vector<size_t>assignments(data.size());
+	vector<size_t>assignments(data.size());
 	for(size_t iteration = 0; iteration < number_of_iterations; ++iteration){
 		// find assignements
 		for (size_t point = 0; point < data.size() ; ++point){
-			double best_distance = std::numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
+			double best_distance = numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
 			size_t best_cluster = 0; // variable mejor cluster, inicializada con 0
 			for (size_t cluster = 0; cluster < k; ++cluster){
 				const double distance = squared_12_distance(data[point], means[cluster]);
@@ -50,42 +57,61 @@ DataFrame k_means( const DataFrame& data, size_t k, size_t number_of_iterations)
 		}
 		
 		DataFrame new_means(k);
-		std::vector<size_t> counts(k, 0);
+		vector<size_t> counts(k, 0);
 		for (size_t point = 0; point < data.size(); ++point){
-		    const auto cluster = assignments[point];
-		    new_means[cluster].x += data[point].x;
-		    new_means[cluster].y += data[point].y;			
+		    const size_t cluster = assignments[point];
+		    for(size_t d = 0; d < dimensions; d++){
+		    	new_means[cluster][d] += data[point][d];
+		    }			
 			counts[cluster] += 1;
 		}
 		
 		// divide sumas por saltos para obtener centroides
 		for (size_t cluster = 0; cluster < k; ++cluster){
-			const auto count = std::max<size_t>(1, counts[cluster]);
-			means[cluster].x = new_means[cluster].y / count;
-			means[cluster].y = new_means[cluster].y / count;
-			
+			const size_t count = max<size_t>(1, counts[cluster]);
+			for(size_t d = 0; d < dimensions;d++){
+				means[cluster][d] = new_means[cluster][d] / count;
+			}			
 		}
 	}	
-	return means;
+	return {means, assignments};
 }
+
+
+DataFrame readData(string File){
+	DataFrame data;
+	ifstream input(File);
+	strinf line;
+	while(getline(input,line)){
+		istringstream iss(line);
+		double x, y, z, w;
+		string a;
+		iss >> x >> y >> z >> w >> a;
+		Point p;
+		p.push_back(x);
+		p.push_back(y);
+		p.push_back(z);
+		p.push_back(w);
+		cout << x << p[0] << endl;
+		data.push_back(p);
+		}
+		cout << data.size() << endl
+		return data
+}
+
+
 
 int main(){
 	// main para generar un data set random (mejorar con un dataset externo)
-	DataFrame SampleData(50);
-	for(size_t i= 0; i < 50; i++){
-		SampleData[i].x = rand() % (100);
-		SampleData[i].y = rand() % (100);
-		//muestra en pantalla el dataset
-		std::cout << SampleData[i].x << " "  << SampleData[i].y << "\n" ;
-	}
-	
-	DataFrame kmeans1(3);
-	kmeans1 = k_means(SampleData, 3 , 4); // k means con 3 centroides y 4 iteraciones
-	std::cout << "K-MEANS" << "\n";
-	//muestra resutado
-	for(size_t i= 0; i < 3; i++){
-		
-		//muestra en pantalla el kmeans
-		std::cout << kmeans1[i].x << " "  << kmeans1[i].y << "\n" ;
-	}
+	cout << 'k_means'<< endl;
+	DataFrame data = readData('iris.data');
+	DataFrame c;
+	vector<size_t> a;
+
+	ScoperTimer t;
+	tie(c,a) = k_means(data,3,100);
+	cout << 'tiempo ' << t.elapsed() << endl;
+	cout << a.size() << endl;
+	return 0;
+
 }
