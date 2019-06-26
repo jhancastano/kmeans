@@ -1,4 +1,4 @@
-//#include "timer.hh"
+#include "timer.hh"
 #include <tuple>
 #include <string>
 #include <fstream>
@@ -27,22 +27,30 @@ inline double squared_12_distance(const Point first,const Point second){
 	return d;
 }
 
-DataFrame k_means( const DataFrame& data, size_t k, size_t number_of_iterations){
+DataFrame k_means( const DataFrame& data, size_t k, size_t number_of_iterations, size_t ep){
 	
-	size_t dimensions = data[0].size();		   
+	size_t dimensions = data[0].size();// en proximo codigo colocar data.size/nvariables		   
 	static random_device seed;
 	static mt19937 random_number_generator(seed());
-	uniform_int_distribution<size_t> indices(0,data.size()-1);		  
+	uniform_int_distribution<size_t> indices(0,data.size()-1);/// change		  
 	
 	// pick centroids as random points from the dataset
-	DataFrame means(k);
+	DataFrame means(k);// K*nvariables
 	
 	for (Point& cluster : means){ // cluster -> means
 		size_t i = indices(random_number_generator);
-		cluster = data[i];		
-	}				   
-	vector<size_t>assignments(data.size());
+		cluster = data[i];//data rango i nvariable tener en cuenta ultimo rango y primero		
+	}
+
+
+	vector<size_t> assignments(data.size());
+
+	
+
 	for(size_t iteration = 0; iteration < number_of_iterations; iteration++){
+
+		//if(ep < )
+
 		// find assignements
 		for (size_t point = 0; point < data.size() ; point++){
 			double best_distance = numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
@@ -76,6 +84,7 @@ DataFrame k_means( const DataFrame& data, size_t k, size_t number_of_iterations)
 			}			
 		}
 	}	
+	cout << assignments[0]<< endl;
 	return means;
 }
 
@@ -92,7 +101,6 @@ DataFrame readData(string File,int nVariables ){
 			iss >> v;
 			p.push_back(v);
 			}
-
 		data.push_back(p);
 		}
 		cout << data.size() << endl;
@@ -104,17 +112,18 @@ DataFrame readData(string File,int nVariables ){
 int main(){
 	// main para generar un data set random (mejorar con un dataset externo)
 	cout << "k_means"<< endl;
-	DataFrame data = readData("iris.data",2);
+	DataFrame data = readData("arrhythmia.dat",4);
 	cout << data.size() << endl;
 	DataFrame c;
 	//vector<size_t> a;
 	//cout << data << endl;
-	//ScopedTimer t;
+	
 	cout << data[0][0]<<'|'<<data[0][1]<< endl;
 	cout << data[1][0]<<'|'<<data[1][1]<< endl;
 	cout << data[149][0]<<'|'<<data[149][1]<< endl;
-	c = k_means(data,9,100);
-	//cout << "tiempo" << t.elapsed() << endl;
+	ScopedTimer t;
+	c = k_means(data,3,1000,1);
+	cout << "tiempo" << t.elapsed() << endl;
 	cout << c[0].size() << "fin" <<endl;
 	cout << "hola"<< endl;
 
