@@ -27,15 +27,19 @@ inline double squared_12_distance(const Point first,const Point second){
 	return d;
 }
 
-DataFrame k_means( const DataFrame& data, size_t k, size_t number_of_iterations, size_t ep){
-	
-	size_t dimensions = data[0].size();// en proximo codigo colocar data.size/nvariables		   
+pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t number_of_iterations, double ep){
+	size_t dimensions = data[0].size();
+	// en proximo codigo colocar data.size/nvariables		   
 	static random_device seed;
 	static mt19937 random_number_generator(seed());
 	uniform_int_distribution<size_t> indices(0,data.size()-1);/// change		  
-	
 	// pick centroids as random points from the dataset
 	DataFrame means(k);// K*nvariables
+	
+	double distanciaepsilon;
+	size_t contador;
+	size_t epsilon = numeric_limits<size_t>::max();
+
 	
 	for (Point& cluster : means){ // cluster -> means
 		size_t i = indices(random_number_generator);
@@ -45,12 +49,11 @@ DataFrame k_means( const DataFrame& data, size_t k, size_t number_of_iterations,
 
 	vector<size_t> assignments(data.size());
 
-	
-
 	for(size_t iteration = 0; iteration < number_of_iterations; iteration++){
 
-		//if(ep < )
-
+		if(ep > epsilon ){
+			return {means, assignments};
+		}
 		// find assignements
 		for (size_t point = 0; point < data.size() ; point++){
 			double best_distance = numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
@@ -66,6 +69,7 @@ DataFrame k_means( const DataFrame& data, size_t k, size_t number_of_iterations,
 		}
 		
 		DataFrame new_means(k,vector<double>(dimensions,0.0));
+		DataFrame new_meansaux(k,vector<double>(dimensions,0.0));
 		vector<size_t> counts(k, 0);
 
 		for (size_t point = 0; point < data.size(); point++){
@@ -75,17 +79,31 @@ DataFrame k_means( const DataFrame& data, size_t k, size_t number_of_iterations,
 		    }			
 			counts[cluster] += 1;
 		}
-		
+
 		// divide sumas por saltos para obtener centroides
-		for (size_t cluster = 0; cluster < k; ++cluster){
+		for (size_t cluster = 0; cluster < k; cluster++){
 			const size_t count = max<size_t>(1, counts[cluster]);
 			for(size_t d = 0; d < dimensions;d++){
+				new_meansaux[cluster][d] = means[cluster][d];
 				means[cluster][d] = new_means[cluster][d] / count;
+			}
+			distanciaepsilon = squared_12_distance(new_meansaux[cluster],means[cluster]);
+			//cout << new_meansaux[cluster][0] <<'|'<< new_meansaux[cluster][1] <<'|'<< new_meansaux[cluster][2]<< endl;
+			//cout << means[cluster][0] <<'|'<< means[cluster][1] <<'|'<< means[cluster][2]<< endl;
+			if(distanciaepsilon < ep){
+				//cout << "exito" << endl;
+				contador++;
+				cout << contador << endl;
+			}
+			else{//cout << "menor 1" << endl;
+				contador = 0;}
+			if(contador > k){
+				cout << iteration <<endl;
+				return {means, assignments};
 			}			
 		}
-	}	
-	cout << assignments[0]<< endl;
-	return means;
+	}
+	return {means, assignments};
 }
 
 
@@ -112,22 +130,36 @@ DataFrame readData(string File,int nVariables ){
 int main(){
 	// main para generar un data set random (mejorar con un dataset externo)
 	cout << "k_means"<< endl;
-	DataFrame data = readData("arrhythmia.dat",4);
+	DataFrame data = readData("arrhythmia.dat",278);
 	cout << data.size() << endl;
 	DataFrame c;
-	//vector<size_t> a;
+	vector<size_t> a;
 	//cout << data << endl;
 	
-	cout << data[0][0]<<'|'<<data[0][1]<< endl;
-	cout << data[1][0]<<'|'<<data[1][1]<< endl;
-	cout << data[149][0]<<'|'<<data[149][1]<< endl;
 	ScopedTimer t;
-	c = k_means(data,3,1000,1);
-	cout << "tiempo" << t.elapsed() << endl;
-	cout << c[0].size() << "fin" <<endl;
-	cout << "hola"<< endl;
+	tie(c,a) = k_means(data,16,1000,0.0);
+	cout <<  " tiempo " << t.elapsed() << endl;
 
-	//cout << c[1] << endl;
+	cout << a.size() << endl;
+	int k1 = 0;
+	int k2 = 0;
+	int k3 = 0; 
+	for(size_t i = 0; i < data.size(); i++) {
+  	//cout << "point " << i << " -> " << a[i] << endl;
+  	
+  	if(a[i]==0){
+  		k1++;
+  	}
+  	if(a[i]==1){
+  		k2++;
+  	}
+  	if(a[i]==2){
+  		k3++;
+  	}
+   	}
+   	cout << "k1 -> " << k1 << endl;
+   	cout << "k2 -> " << k2 << endl;
+   	cout << "k3 -> " << k3 << endl;
 	return 0;
 
 }
