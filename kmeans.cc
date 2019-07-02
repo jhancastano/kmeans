@@ -93,7 +93,6 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 			if(distanciaepsilon < ep){
 				//cout << "exito" << endl;
 				contador++;
-				cout << contador << endl;
 			}
 			else{//cout << "menor 1" << endl;
 				contador = 0;}
@@ -126,40 +125,42 @@ DataFrame readData(string File,int nVariables ){
 }
 
 
+void imprimirkameans(vector<size_t> m,DataFrame data,int k){
+	vector<int> v(k);
+	cout << "prueba" << endl; 
+	for(int i = 0; i < data.size(); i++) {
+  	//cout << "point " << i << " -> " << a[i] << endl;
+	//cout << m[i] <<endl;
+	//cout << data[i][0]<<'|'<<data[i][1]<< '|'<< data[i][2]<<'|'<<data[i][3]<< " -> "<< m[i] <<endl;
+  	v[m[i]]++;
+  	}
+
+  	cout << v.size() << endl;
+  	for(int x = 0; x<v.size(); x++){
+  		cout << "k_means" << x << " -> "<<v[x] <<endl;
+  	}
+
+
+}
+
+
 
 int main(){
-	// main para generar un data set random (mejorar con un dataset externo)
+	// main
 	cout << "k_means"<< endl;
-	DataFrame data = readData("arrhythmia.dat",278);
+	DataFrame data = readData("iris.data",4);
 	cout << data.size() << endl;
 	DataFrame c;
 	vector<size_t> a;
 	//cout << data << endl;
-	
 	ScopedTimer t;
-	tie(c,a) = k_means(data,16,1000,0.0);
-	cout <<  " tiempo " << t.elapsed() << endl;
 
-	cout << a.size() << endl;
-	int k1 = 0;
-	int k2 = 0;
-	int k3 = 0; 
-	for(size_t i = 0; i < data.size(); i++) {
-  	//cout << "point " << i << " -> " << a[i] << endl;
-  	
-  	if(a[i]==0){
-  		k1++;
-  	}
-  	if(a[i]==1){
-  		k2++;
-  	}
-  	if(a[i]==2){
-  		k3++;
-  	}
-   	}
-   	cout << "k1 -> " << k1 << endl;
-   	cout << "k2 -> " << k2 << endl;
-   	cout << "k3 -> " << k3 << endl;
+	tie(c,a) = k_means(data,3,100000,0.0);
+	cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
+
+	imprimirkameans(a,data,3);
+
+	
 	return 0;
 
 }
