@@ -51,11 +51,10 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 
 	vector<size_t> assignments(data.size());
 
+	#pragma omp parallel for
 	for(size_t iteration = 0; iteration < number_of_iterations; iteration++){
 
-		if(ep > epsilon ){
-			return {means, assignments};
-		}
+		
 		// find assignements
 		for (size_t point = 0; point < data.size() ; point++){
 			double best_distance = numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
@@ -100,8 +99,11 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 				contador = 0;}
 			if(contador > k){
 				cout << iteration <<endl;
-				return {means, assignments};
+				iteration = number_of_iterations + 1;
 			}			
+		}
+		if(ep > epsilon ){
+			iteration = number_of_iterations + 1;
 		}
 	}
 	return {means, assignments};
@@ -157,7 +159,7 @@ int main(){
 	//cout << data << endl;
 	ScopedTimer t;
 
-	tie(c,a) = k_means(data,3,10,0.0);
+	tie(c,a) = k_means(data,3,10000,0.0);
 	cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
 
 	cout <<"c :" << a[149] << endl;

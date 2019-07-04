@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
-
+#include <omp.h>
 
 using namespace std;
 
@@ -51,11 +51,11 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 	vector<size_t> assignments(data.size()/nVariables);
 
 	
-
+	#pragma omp parallel for
 	for(size_t iteration = 0; iteration < number_of_iterations; ++iteration){
 
 		if(ep > epsilon ){
-			return {means, assignments};
+			iteration = number_of_iterations + 1;
 		}
 		// find assignements
 		for (size_t point = 0; point < data.size()/nVariables ; ++point){
@@ -104,7 +104,7 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 				contador = 0;}
 			if(contador > k){
 				cout << iteration <<endl;
-				return {means, assignments};
+				iteration = number_of_iterations + 1;
 			}			
 		}
 	}
@@ -143,10 +143,7 @@ void imprimirkameans(vector<size_t> m,int k){
   	for(int x = 0; x<v.size(); x++){
   		cout << "k_means" << x << " -> "<<v[x] <<endl;
   	}
-
-
 }
-
 
 
 int main(){
