@@ -11,41 +11,40 @@
 using namespace std;
 
 
-using Point = vector<double>;
-
-using DataFrame = vector<Point>;
+using DataFrame = vector<double>;
 
 inline double square(double value){
 	return value * value;
 }
 
-inline double squared_12_distance(const Point first,const Point second){
+inline double squared_12_distance(const DataFrame first,int firstpoint, const DataFrame second,int secondpoint , int nVariables){
 	double d = 0.0;
-	for(size_t dim = 0; dim < first.size();dim++){
-		d += square(first[dim]-second[dim]);
+	for(size_t dim = 0; dim < nVariables;dim++){
+		d += square(first[firstpoint + dim]- second[secondpoint + dim]);
 	}
 	return d;
 }
 
-pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t number_of_iterations, double ep){
-	size_t dimensions = data[0].size();
-	// en proximo codigo colocar data.size/nvariables
-
+pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_t number_of_iterations,size_t nVariables, double ep){
+	size_t dimensions = nVariables;
+	// en proximo codigo colocar data.size/nvariables		   
 	static random_device seed;
 	static mt19937 random_number_generator(seed());
-	uniform_int_distribution<size_t> indices(0,data.size()-1);/// change		  
+	cout << "prueba"<< endl;
+	uniform_int_distribution<size_t> indices(0,data.size()/nVariables -1);/// change		  
 	// pick centroids as random points from the dataset
-	DataFrame means(k);// K*nvariables
+	DataFrame means(k*nVariables);// K*nvariables
 	
 	double distanciaepsilon;
 	size_t contador;
 	size_t epsilon = numeric_limits<size_t>::max();
 
-	
-	for (Point& cluster : means){ // cluster -> means
+
+	for(int y=0; y < k; y++ ){
 		size_t i = indices(random_number_generator);
-		cout <<'|' << i << '|' <<endl;
-		cluster = data[i];//data rango i nvariable tener en cuenta ultimo rango y primero		
+		for(int x=0;x<nVariables ;x++){
+			means[y*nVariables+x] = data[x+i*nVariables];
+		}
 	}
 
 
@@ -57,11 +56,11 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 			return {means, assignments};
 		}
 		// find assignements
-		for (size_t point = 0; point < data.size() ; point++){
+		for (size_t point = 0; point < data.size()/nVariables ; point++){
 			double best_distance = numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
 			size_t best_cluster = 0; // variable mejor cluster, inicializada con 0
 			for (size_t cluster = 0; cluster < k; cluster++){
-				const double distance = squared_12_distance(data[point], means[cluster]);
+				const double distance = squared_12_distance(data,point,means,cluster,nVariables);
 				if(distance < best_distance){
 				    best_distance = distance;
 				    best_cluster = cluster;
@@ -70,14 +69,14 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 		assignments[point] = best_cluster;
 		}
 		
-		DataFrame new_means(k,vector<double>(dimensions,0.0));
-		DataFrame new_meansaux(k,vector<double>(dimensions,0.0));
+		DataFrame new_means(k*dimensions,0.0);
+		DataFrame new_meansaux(k*dimensions,0.0);
 		vector<size_t> counts(k, 0);
 
 		for (size_t point = 0; point < data.size(); point++){
 		    const size_t cluster = assignments[point];
 		    for(size_t d = 0; d < dimensions; d++){
-		    	new_means[cluster][d] += data[point][d];
+		    	new_means[cluster*nVariables + d] += data[point*nVariables + d];
 		    }			
 			counts[cluster] += 1;
 		}
@@ -86,10 +85,10 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 		for (size_t cluster = 0; cluster < k; cluster++){
 			const size_t count = max<size_t>(1, counts[cluster]);
 			for(size_t d = 0; d < dimensions;d++){
-				new_meansaux[cluster][d] = means[cluster][d];
-				means[cluster][d] = new_means[cluster][d] / count;
+				new_meansaux[cluster * nVariables + d] = means[cluster * nVariables + d];
+				means[cluster*nVariables + d] = new_means[cluster*nVariables + d] / count;
 			}
-			distanciaepsilon = squared_12_distance(new_meansaux[cluster],means[cluster]);
+			distanciaepsilon = squared_12_distance(new_meansaux,cluster,means,cluster,nVariables);
 			//cout << new_meansaux[cluster][0] <<'|'<< new_meansaux[cluster][1] <<'|'<< new_meansaux[cluster][2]<< endl;
 			//cout << means[cluster][0] <<'|'<< means[cluster][1] <<'|'<< means[cluster][2]<< endl;
 			if(distanciaepsilon < ep){
@@ -115,22 +114,20 @@ DataFrame readData(string File,int nVariables ){
 	while(getline(input,line)){
 		istringstream iss(line);
 		double v;
-		Point p;
 		for(int i = 0;i < nVariables; i++){
 			iss >> v;
-			p.push_back(v);
+			data.push_back(v);
 			}
-		data.push_back(p);
 		}
 		cout << data.size() << endl;
 		return data;
 }
 
 
-void imprimirkameans(vector<size_t> m,DataFrame data,int k){
+void imprimirkameans(vector<size_t> m,int k){
 	vector<int> v(k);
 	cout << "prueba" << endl; 
-	for(int i = 0; i < data.size(); i++) {
+	for(int i = 0; i < m.size(); i++) {
   	//cout << "point " << i << " -> " << a[i] << endl;
 	//cout << m[i] <<endl;
 	//cout << data[i][0]<<'|'<<data[i][1]<< '|'<< data[i][2]<<'|'<<data[i][3]<< " -> "<< m[i] <<endl;
@@ -157,11 +154,10 @@ int main(){
 	//cout << data << endl;
 	ScopedTimer t;
 
-	tie(c,a) = k_means(data,3,10,0.0);
+	tie(c,a) = k_means(data,3,10,4,0.0);
 	cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
 
-	cout <<"c :" << a[149] << endl;
-	imprimirkameans(a,data,3);
+	imprimirkameans(a,3);
 
 	
 	return 0;
