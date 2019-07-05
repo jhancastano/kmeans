@@ -30,35 +30,26 @@ inline double squared_12_distance(const Point first,const Point second){
 
 pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t number_of_iterations, double ep){
 	size_t dimensions = data[0].size();
-	// en proximo codigo colocar data.size/nvariables
-
 	static random_device seed;
 	static mt19937 random_number_generator(seed());
 	uniform_int_distribution<size_t> indices(0,data.size()-1);/// change		  
 	// pick centroids as random points from the dataset
-	DataFrame means(k);// K*nvariables
-	
+	DataFrame means(k);// 
 	double distanciaepsilon;
 	int contador = 0;
 	size_t epsilon = numeric_limits<size_t>::max();
-
-	
+//------------------asignacion de primeros cluster--------------------------	
 	for (Point& cluster : means){ // cluster -> means
 		size_t i = indices(random_number_generator);
-		cout <<'|' << i << '|' <<endl;
 		cluster = data[i];//data rango i nvariable tener en cuenta ultimo rango y primero		
-	}
-
-
+		}
 	vector<size_t> assignments(data.size());
-
-	//#pragma omp parallel for num_threads(4)
+	
+//--------------------------ciclo de kmeans-------------------------------
 	//#pragma omp parallel for
 	for(size_t iteration = 0; iteration < number_of_iterations; ++iteration){
-
-		
 		// find assignements
-		//#pragma omp parallel for num_threads(4)
+		//#pragma omp parallel for 
 		for (size_t point = 0; point < data.size() ; ++point){
 			double best_distance = numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
 			size_t best_cluster = 0; // variable mejor cluster, inicializada con 0
@@ -67,47 +58,48 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 				if(distance < best_distance){
 				    best_distance = distance;
 				    best_cluster = cluster;
+					}
 				}
+			assignments[point] = best_cluster;
 			}
-		assignments[point] = best_cluster;
-		}
-		
-		DataFrame new_means(k,vector<double>(dimensions,0.0));
-		DataFrame new_meansaux(k,vector<double>(dimensions,0.0));
+		DataFrame new_means(k,vector<double>(dimensions,0.0));// means nuevo
+		DataFrame new_meansaux(k,vector<double>(dimensions,0.0));//means actual
 		vector<size_t> counts(k, 0);
-
+	//----------------------- asigna cluster a los puntos----------------
 		//#pragma omp parallel for
 		for (size_t point = 0; point < data.size(); ++point){
 		    const size_t cluster = assignments[point];
 		    for(size_t d = 0; d < dimensions; d++){
 		    	new_means[cluster][d] += data[point][d];
-		    }			
+		    	}			
 			counts[cluster] += 1;
-		}
-		// divide sumas por saltos para obtener centroides
+			}
+	//------------------- divide sumas por saltos para obtener centroides
+		//#pragma omp parallel for
 		for (size_t cluster = 0; cluster < k; ++cluster){
 			const size_t count = max<size_t>(1, counts[cluster]);
 			for(size_t d = 0; d < dimensions;d++){
 				new_meansaux[cluster][d] = means[cluster][d];
 				means[cluster][d] = new_means[cluster][d] / count;
-			}
+				}
 			distanciaepsilon = squared_12_distance(new_meansaux[cluster],means[cluster]);
 			if(distanciaepsilon < ep){
 				contador++;
-			}
+				}
 			if(distanciaepsilon > ep){
 				contador --;
-			}	
-		}
-		//final de centroides nuevos---------------
-		//-------------retorno si los centroides no cambian o el cambio es menor a epsilon
+				}	
+			}
+		//-------------final de centroides nuevos---------------
+	//-------------retorno si los centroides no cambian o el cambio es menor a epsilon
 		if(contador == k ){
 			return {means, assignments};
 		}
 		contador = 0;
-		//--------------fin retorno---------------------
+	//--------------fin retorno---------------------
 
 	}
+//----------------termina iteaciones--------------------------
 	return {means, assignments};
 }
 
@@ -133,41 +125,27 @@ DataFrame readData(string File,int nVariables ){
 
 void imprimirkameans(vector<size_t> m,DataFrame data,int k){
 	vector<int> v(k);
-	cout << "prueba" << endl; 
 	for(int i = 0; i < data.size(); i++) {
-  	//cout << "point " << i << " -> " << a[i] << endl;
-	//cout << m[i] <<endl;
-	//cout << data[i][0]<<'|'<<data[i][1]<< '|'<< data[i][2]<<'|'<<data[i][3]<< " -> "<< m[i] <<endl;
-  	v[m[i]]++;
-  	}
-
+  		v[m[i]]++;
+  		}
   	cout << v.size() << endl;
   	for(int x = 0; x<v.size(); x++){
   		cout << "k_means" << x << " -> "<<v[x] <<endl;
-  	}
-
-
+  		}
 }
-
 
 
 int main(){
 	// main
-	cout << "k_means"<< endl;
 	DataFrame data = readData("iris.data",4);
 	cout << data.size() << endl;
 	DataFrame c;
 	vector<size_t> a;
-	//cout << data << endl;
 	ScopedTimer t;
-
 	tie(c,a) = k_means(data,3,30,0.001);
 	cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
-
 	cout <<"c :" << a[149] << endl;
 	imprimirkameans(a,data,3);
-
-	
 	return 0;
 
 }
