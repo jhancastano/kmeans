@@ -47,7 +47,7 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 	//#pragma omp parallel for
 	for(size_t iteration = 0; iteration < number_of_iterations; ++iteration){
 		// find assignements ---- con este for da mejor tiempo
-		//#pragma omp parallel for 
+		#pragma omp parallel for 
 		for (size_t point = 0; point < data.size() ; ++point){
 			double best_distance = numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
 			size_t best_cluster = 0; // variable mejor cluster, inicializada con 0
@@ -151,8 +151,6 @@ int main(){
 	cout << "ingrese epsilon de convergencia ej(0.1)"<<endl;
 	cin >> epsilon;
 
-
-
 	DataFrame data = readData(dataset,numeroVariables);
 	//cout << data.size() << endl;
 	DataFrame c;
@@ -161,6 +159,7 @@ int main(){
 	tie(c,a) = k_means(data,numeroCluster,numeroIT,epsilon);
 	cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
 	imprimirkameans(a,data,numeroCluster);
+	
 	return 0;
 
 }

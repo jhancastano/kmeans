@@ -6,10 +6,8 @@
 #include <iostream>
 #include <vector>
 #include <random>
-#include <omp.h>
 
 using namespace std;
-
 
 using DataFrame = vector<double>;
 
@@ -38,13 +36,12 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 	size_t epsilon = numeric_limits<size_t>::max();
 	for(int y=0; y < k; y++ ){
 		size_t i = indices(random_number_generator);
-		for(int x=0;x<nVariables ;x++){
-			means[y*nVariables+x] = data[x+i*nVariables];
+		for(int x=0;x < nVariables ;++x){
+			means[y*nVariables+x] = data[i*nVariables+x];
 		}
 	}
 	vector<size_t> assignments(data.size()/nVariables);
-	
-	//#pragma omp parallel for
+
 	for(size_t iteration = 0; iteration < number_of_iterations; ++iteration){
 		if(ep > epsilon ){
 			iteration = number_of_iterations + 1;
@@ -53,8 +50,8 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 		for (size_t point = 0; point < data.size()/nVariables ; ++point){
 			double best_distance = numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
 			size_t best_cluster = 0; // variable mejor cluster, inicializada con 0
-			for (size_t cluster = 0; cluster < k; cluster++){
-				const double distance = squared_12_distance(data,point,means,cluster,nVariables);
+			for (size_t cluster = 0; cluster < k; ++cluster){
+				const double distance = squared_12_distance( data ,point, means,cluster, nVariables);
 				if(distance < best_distance){
 				    best_distance = distance;
 				    best_cluster = cluster;
@@ -86,7 +83,7 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 				contador++;
 				}
 			if(distanciaepsilon > ep){
-				contador --;
+				contador--;
 				}
 			}
 		if(contador == k ){
@@ -117,11 +114,9 @@ DataFrame readData(string File,int nVariables ){
 
 void imprimirkameans(vector<size_t> m,int k){
 	vector<int> v(k);
-	cout << "prueba" << endl; 
 	for(int i = 0; i < m.size(); i++) {
   	v[m[i]]++;
   	}
-  	cout << v.size() << endl;
   	for(int x = 0; x<v.size(); x++){
   		cout << "k_means" << x << " -> "<<v[x] <<endl;
   	}
@@ -130,16 +125,35 @@ void imprimirkameans(vector<size_t> m,int k){
 
 int main(){
 	// main
-	DataFrame data = readData("iris.data",4);
+	string dataset;
+	int numeroVariables;
+	int numeroCluster;
+	int numeroIT;
+	double epsilon;
+
+	cout << "ingrese nombre dataset"<<endl;
+	cin >>dataset;
+	cout << "ingrese numero variables dataset"<<endl;
+	cin >> numeroVariables;
+	cout << "ingrese numero de cluster o k"<<endl;
+	cin >> numeroCluster;
+	cout << "ingrese numero de iteraciones"<<endl;
+	cin >> numeroIT;
+	cout << "ingrese epsilon de convergencia ej(0.1)"<<endl;
+	cin >> epsilon;
+
+
+
+	DataFrame data = readData(dataset,numeroVariables);
 	DataFrame c;
 	vector<size_t> a;
 
 	ScopedTimer t;
 	//kmeans(data,nCluster,nIteraciones,nVariables,epsilon)
-	tie(c,a) = k_means(data,3,10000,4,0.0);
+	tie(c,a) = k_means(data,numeroCluster,numeroIT,numeroVariables,epsilon);
 	cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
 
-	imprimirkameans(a,3);
+	imprimirkameans(a,numeroCluster);
 
 	
 	return 0;
