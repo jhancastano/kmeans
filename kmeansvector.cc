@@ -36,7 +36,7 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 	DataFrame means(k*nVariables,0.0);// K*nvariables
 	
 	double distanciaepsilon;
-	size_t contador;
+	int contador;
 	size_t epsilon = numeric_limits<size_t>::max();
 
 
@@ -97,16 +97,20 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 			//cout << new_meansaux[cluster][0] <<'|'<< new_meansaux[cluster][1] <<'|'<< new_meansaux[cluster][2]<< endl;
 			//cout << means[cluster][0] <<'|'<< means[cluster][1] <<'|'<< means[cluster][2]<< endl;
 			if(distanciaepsilon < ep){
-				//cout << "exito" << endl;
 				contador++;
 			}
-			else{//cout << "menor 1" << endl;
-				contador = 0;}
-			if(contador > k){
-				cout << iteration <<endl;
-				iteration = number_of_iterations + 1;
-			}			
+			if(distanciaepsilon > ep){
+				contador --;
+			}
+	
 		}
+		if(contador == k ){
+			cout << "salio con k"<<k<<" contador :"<<contador <<endl; 
+			return {means, assignments};
+		}
+		cout << "k"<<k<<" contador :"<<contador <<endl;
+		contador = 0;
+
 	}
 	return {means, assignments};
 }

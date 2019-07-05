@@ -21,6 +21,7 @@ inline double square(double value){
 
 inline double squared_12_distance(const Point first,const Point second){
 	double d = 0.0;
+	
 	for(size_t dim = 0; dim < first.size();dim++){
 		d += square(first[dim]-second[dim]);
 	}
@@ -38,7 +39,7 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 	DataFrame means(k);// K*nvariables
 	
 	double distanciaepsilon;
-	size_t contador;
+	int contador = 0;
 	size_t epsilon = numeric_limits<size_t>::max();
 
 	
@@ -51,12 +52,14 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 
 	vector<size_t> assignments(data.size());
 
-	#pragma omp parallel for
-	for(size_t iteration = 0; iteration < number_of_iterations; iteration++){
+	//#pragma omp parallel for num_threads(4)
+	//#pragma omp parallel for
+	for(size_t iteration = 0; iteration < number_of_iterations; ++iteration){
 
 		
 		// find assignements
-		for (size_t point = 0; point < data.size() ; point++){
+		//#pragma omp parallel for num_threads(4)
+		for (size_t point = 0; point < data.size() ; ++point){
 			double best_distance = numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
 			size_t best_cluster = 0; // variable mejor cluster, inicializada con 0
 			for (size_t cluster = 0; cluster < k; cluster++){
@@ -73,38 +76,37 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 		DataFrame new_meansaux(k,vector<double>(dimensions,0.0));
 		vector<size_t> counts(k, 0);
 
-		for (size_t point = 0; point < data.size(); point++){
+		//#pragma omp parallel for
+		for (size_t point = 0; point < data.size(); ++point){
 		    const size_t cluster = assignments[point];
 		    for(size_t d = 0; d < dimensions; d++){
 		    	new_means[cluster][d] += data[point][d];
 		    }			
 			counts[cluster] += 1;
 		}
-
 		// divide sumas por saltos para obtener centroides
-		for (size_t cluster = 0; cluster < k; cluster++){
+		for (size_t cluster = 0; cluster < k; ++cluster){
 			const size_t count = max<size_t>(1, counts[cluster]);
 			for(size_t d = 0; d < dimensions;d++){
 				new_meansaux[cluster][d] = means[cluster][d];
 				means[cluster][d] = new_means[cluster][d] / count;
 			}
 			distanciaepsilon = squared_12_distance(new_meansaux[cluster],means[cluster]);
-			//cout << new_meansaux[cluster][0] <<'|'<< new_meansaux[cluster][1] <<'|'<< new_meansaux[cluster][2]<< endl;
-			//cout << means[cluster][0] <<'|'<< means[cluster][1] <<'|'<< means[cluster][2]<< endl;
 			if(distanciaepsilon < ep){
-				//cout << "exito" << endl;
 				contador++;
 			}
-			else{//cout << "menor 1" << endl;
-				contador = 0;}
-			if(contador > k){
-				cout << iteration <<endl;
-				iteration = number_of_iterations + 1;
-			}			
+			if(distanciaepsilon > ep){
+				contador --;
+			}	
 		}
-		if(ep > epsilon ){
-			iteration = number_of_iterations + 1;
+		//final de centroides nuevos---------------
+		//-------------retorno si los centroides no cambian o el cambio es menor a epsilon
+		if(contador == k ){
+			return {means, assignments};
 		}
+		contador = 0;
+		//--------------fin retorno---------------------
+
 	}
 	return {means, assignments};
 }
@@ -159,7 +161,7 @@ int main(){
 	//cout << data << endl;
 	ScopedTimer t;
 
-	tie(c,a) = k_means(data,3,10000,0.0);
+	tie(c,a) = k_means(data,3,30,0.001);
 	cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
 
 	cout <<"c :" << a[149] << endl;
