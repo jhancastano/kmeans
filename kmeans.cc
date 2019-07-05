@@ -12,7 +12,6 @@ using namespace std;
 
 
 using Point = vector<double>;
-
 using DataFrame = vector<Point>;
 
 inline double square(double value){
@@ -21,7 +20,6 @@ inline double square(double value){
 
 inline double squared_12_distance(const Point first,const Point second){
 	double d = 0.0;
-	
 	for(size_t dim = 0; dim < first.size();dim++){
 		d += square(first[dim]-second[dim]);
 	}
