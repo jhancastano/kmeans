@@ -7,7 +7,6 @@
 #include <vector>
 #include <random>
 
-
 using namespace std;
 
 
@@ -140,19 +139,23 @@ int main(){
 	int numeroIT;
 	double epsilon;
 
-	cout << "ingrese nombre dataset"<<endl;
-	cin >>dataset;
-	cout << "ingrese numero variables dataset"<<endl;
-	cin >> numeroVariables;
-	cout << "ingrese numero de cluster o k"<<endl;
-	cin >> numeroCluster;
-	cout << "ingrese numero de iteraciones"<<endl;
-	cin >> numeroIT;
-	cout << "ingrese epsilon de convergencia ej(0.1)"<<endl;
-	cin >> epsilon;
+	//cout << "ingrese nombre dataset"<<endl;
+	//cin >>dataset;
+	//cout << "ingrese numero variables dataset"<<endl;
+	//cin >> numeroVariables;
+	//cout << "ingrese numero de cluster o k"<<endl;
+	//cin >> numeroCluster;
+	//cout << "ingrese numero de iteraciones"<<endl;
+	//cin >> numeroIT;
+	//cout << "ingrese epsilon de convergencia ej(0.1)"<<endl;
+	//cin >> epsilon;
+	dataset= "arrhythmia.dat";
+	numeroVariables = 279;
+	numeroCluster = 16;
+	numeroIT = 10000;
+	epsilon = 0.1;
 
 	DataFrame data = readData(dataset,numeroVariables);
-	//cout << data.size() << endl;
 	DataFrame c;
 	vector<size_t> a;
 	ScopedTimer t;

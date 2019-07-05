@@ -11,17 +11,28 @@ using namespace std;
 
 using DataFrame = vector<double>;
 
+inline int esmultiplo(int numero,int nVariables){
+	if(nVariables%numero == 0){
+		return 1;
+	}
+	else{
+		return 0;
+	}
+
+}
+
 inline double square(double value){
 	return value * value;
 }
 
-inline double squared_12_distance(const DataFrame first,int firstpoint, const DataFrame second,int secondpoint , int nVariables){
+inline double squared_12_distance(const DataFrame first,const int firstpoint, const DataFrame second,const int secondpoint ,const int nVariables){
 	double d = 0.0;
 	for(size_t dim = 0; dim < nVariables;dim++){
-		d += square(first[firstpoint + dim] - second[secondpoint + dim]);
+		d += square(first[firstpoint*nVariables + dim] - second[secondpoint*nVariables + dim]);
 	}
 	return d;
 }
+
 // returna Dataframe,vector kmeans(data,nCluster,nIteraciones,nVariables,epsilon) 
 pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_t number_of_iterations,size_t nVariables, double ep){
 	size_t dimensions = nVariables;
@@ -32,7 +43,7 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 	// pick centroids as random points from the dataset
 	DataFrame means(k*nVariables,0.0);// K*nvariables
 	double distanciaepsilon;
-	int contador;
+	int contador = 0;
 	size_t epsilon = numeric_limits<size_t>::max();
 	for(int y=0; y < k; y++ ){
 		size_t i = indices(random_number_generator);
@@ -40,12 +51,9 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 			means[y*nVariables+x] = data[i*nVariables+x];
 		}
 	}
-	vector<size_t> assignments(data.size()/nVariables);
 
+	vector<size_t> assignments(data.size()/nVariables);
 	for(size_t iteration = 0; iteration < number_of_iterations; ++iteration){
-		if(ep > epsilon ){
-			iteration = number_of_iterations + 1;
-		}
 		// find assignements
 		for (size_t point = 0; point < data.size()/nVariables ; ++point){
 			double best_distance = numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
@@ -58,12 +66,10 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 				}
 			}
 		assignments[point] = best_cluster;
-		}
-				
+		}		
 		DataFrame new_means(k*dimensions,0.0);
 		DataFrame new_meansaux(k*dimensions,0.0);
 		vector<size_t> counts(k, 0);
-
 		for (size_t point = 0; point < data.size()/nVariables; ++point){
 		    const size_t cluster = assignments[point];
 		    for(size_t d = 0; d < dimensions; d++){
@@ -72,6 +78,11 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 			counts[cluster] += 1;
 		}
 		// divide sumas por saltos para obtener centroides
+		if(contador == k ){
+			return {means, assignments};
+			}
+		contador = 0;
+
 		for (size_t cluster = 0; cluster < k; ++cluster){
 			const size_t count = max<size_t>(1, counts[cluster]);
 			for(size_t d = 0; d < dimensions;d++){
@@ -86,11 +97,7 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 				contador--;
 				}
 			}
-		if(contador == k ){
-			 
-			return {means, assignments};
-			}
-		contador = 0;
+		
 	}
 	return {means, assignments};
 }
@@ -122,6 +129,17 @@ void imprimirkameans(vector<size_t> m,int k){
   	}
 }
 
+void printmens(DataFrame means,int nVariables){
+	for(int i=0; i<means.size();i++){
+		if (esmultiplo(nVariables,i)==1)
+		{
+			cout<<'|'<<endl;
+		}
+		cout << means[i]<<',';
+	}
+	cout<<'|'<<endl;
+}
+
 
 int main(){
 	// main
@@ -131,17 +149,22 @@ int main(){
 	int numeroIT;
 	double epsilon;
 
-	cout << "ingrese nombre dataset"<<endl;
-	cin >>dataset;
-	cout << "ingrese numero variables dataset"<<endl;
-	cin >> numeroVariables;
-	cout << "ingrese numero de cluster o k"<<endl;
-	cin >> numeroCluster;
-	cout << "ingrese numero de iteraciones"<<endl;
-	cin >> numeroIT;
-	cout << "ingrese epsilon de convergencia ej(0.1)"<<endl;
-	cin >> epsilon;
+	//cout << "ingrese nombre dataset"<<endl;
+	//cin >>dataset;
+	//cout << "ingrese numero variables dataset"<<endl;
+	//cin >> numeroVariables;
+	//cout << "ingrese numero de cluster o k"<<endl;
+	//cin >> numeroCluster;
+	//cout << "ingrese numero de iteraciones"<<endl;
+	//cin >> numeroIT;
+	//cout << "ingrese epsilon de convergencia ej(0.1)"<<endl;
+	//cin >> epsilon;
 
+	dataset= "iris.data";
+	numeroVariables =4;
+	numeroCluster = 3;
+	numeroIT = 1000;
+	epsilon = 0.0;
 
 
 	DataFrame data = readData(dataset,numeroVariables);
@@ -154,7 +177,7 @@ int main(){
 	cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
 
 	imprimirkameans(a,numeroCluster);
-
+	printmens(c,numeroVariables);
 	
 	return 0;
 

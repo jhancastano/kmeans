@@ -67,9 +67,8 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 		//#pragma omp parallel for
 		for (size_t point = 0; point < data.size(); ++point){
 		    const size_t cluster = assignments[point];
-		    for(size_t d = 0; d < dimensions; d++){
-		    	new_means[cluster][d] += data[point][d];
-		    	}			
+		    for(size_t d = 0; d < dimensions; d++)
+		    	new_means[cluster][d] += data[point][d];			
 			counts[cluster] += 1;
 			}
 	//------------------- divide sumas por saltos para obtener centroides
@@ -81,12 +80,10 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 				means[cluster][d] = new_means[cluster][d] / count;
 				}
 			distanciaepsilon = squared_12_distance(new_meansaux[cluster],means[cluster]);
-			if(distanciaepsilon < ep){
+			if(distanciaepsilon < ep)
 				contador++;
-				}
-			if(distanciaepsilon > ep){
+			if(distanciaepsilon > ep)
 				contador--;
-				}	
 			}
 		//-------------final de centroides nuevos---------------
 	//-------------retorno si los centroides no cambian o el cambio es menor a epsilon
@@ -100,7 +97,6 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 //----------------termina iteaciones--------------------------
 	return {means, assignments};
 }
-
 
 DataFrame readData(string File,int nVariables ){
 	DataFrame data;
@@ -123,12 +119,18 @@ DataFrame readData(string File,int nVariables ){
 
 void imprimirkameans(vector<size_t> m,DataFrame data,int k){
 	vector<int> v(k);
-	for(int i = 0; i < data.size(); i++) {
+	for(int i = 0; i < data.size(); i++)
   		v[m[i]]++;
-  		}
-  	for(int x = 0; x<v.size(); x++){
+  	for(int x = 0; x<v.size(); x++)
   		cout << "k_means" << x << " -> "<<v[x] <<endl;
-  		}
+}
+
+void printkmeans(DataFrame datos,int nVariables){
+	for(int i = 0; i< datos.size();i++){
+		for(int v = 0; v< nVariables;v++)
+			cout << datos[i][v]<<'|';
+		cout << "--------"<<endl;
+	}
 }
 
 
@@ -140,17 +142,22 @@ int main(){
 	int numeroIT;
 	double epsilon;
 
-	cout << "ingrese nombre dataset"<<endl;
-	cin >>dataset;
-	cout << "ingrese numero variables dataset"<<endl;
-	cin >> numeroVariables;
-	cout << "ingrese numero de cluster o k"<<endl;
-	cin >> numeroCluster;
-	cout << "ingrese numero de iteraciones"<<endl;
-	cin >> numeroIT;
-	cout << "ingrese epsilon de convergencia ej(0.1)"<<endl;
-	cin >> epsilon;
+	//cout << "ingrese nombre dataset"<<endl;
+	//cin >>dataset;
+	//cout << "ingrese numero variables dataset"<<endl;
+	//cin >> numeroVariables;
+	//cout << "ingrese numero de cluster o k"<<endl;
+	//cin >> numeroCluster;
+	//cout << "ingrese numero de iteraciones"<<endl;
+	//cin >> numeroIT;
+	//cout << "ingrese epsilon de convergencia ej(0.1)"<<endl;
+	//cin >> epsilon;
 
+	dataset= "iris.data";
+	numeroVariables = 4;
+	numeroCluster = 3;
+	numeroIT = 1000;
+	epsilon = 0.0;
 
 
 	DataFrame data = readData(dataset,numeroVariables);
@@ -160,7 +167,11 @@ int main(){
 	ScopedTimer t;
 	tie(c,a) = k_means(data,numeroCluster,numeroIT,epsilon);
 	cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
-	imprimirkameans(a,data,numeroCluster);
+	//imprimirkameans(a,data,numeroCluster);
+
+	//cout<<"------>:" <<c.size()<<endl;
+	printkmeans(c,numeroVariables);
+
 	return 0;
 
 }
