@@ -18,7 +18,7 @@ inline double square(double value){
 	return value * value;
 }
 
-inline double squared_12_distance(const Point first,const Point second){
+inline double squared_12_distance(const Point& first,const Point& second){
 	double d = 0.0;
 	for(size_t dim = 0; dim < first.size();dim++){
 		d += square(first[dim]-second[dim]);
@@ -52,7 +52,7 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 //--------------------------ciclo de kmeans-------------------------------
 	for(size_t iteration = 0; iteration < number_of_iterations; ++iteration){
 		// find assignements ---- 
-		#pragma omp parallel for num_threads(8)
+		#pragma omp parallel for //num_threads(8)
 		for (size_t point = 0; point < data.size() ; ++point){
 			double best_distance = numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
 			size_t best_cluster = 0; // variable mejor cluster, inicializada con 0
@@ -208,7 +208,7 @@ int main(){
 	//cin >> epsilon;
 	dataset= "arrhythmia.dat";
 	numeroVariables = 279;
-	numeroCluster = 13;
+	numeroCluster = 40;
 	numeroIT = 1000;
 	epsilon = 0.001;
 
@@ -217,17 +217,19 @@ int main(){
 	DataFrame c;
 	vector<size_t> a;
 	
-		ofstream archivo;
-		archivo.open("tiemposkomp8hilos.csv",ios::out);
-		if(archivo.fail()){
-			cout<<"error"<<endl;
-			exit(1);
-		}
-		for(int i=0;i<100;i++){
+		//ofstream archivo;
+		//archivo.open("tiemposkompOP.csv",ios::out);
+		//if(archivo.fail()){
+		//	cout<<"error"<<endl;
+		//	exit(1);
+		//}
+		for(int i=0;i<10;i++){
 			ScopedTimer t;
-			tie(c,a) = k_means(data,numeroCluster,numeroIT,epsilon,1,means);
-			archivo<<t.elapsed()<<endl;
-			//cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
+			tie(c,a) = k_means(data,numeroCluster,numeroIT,epsilon,0,means);
+			//archivo<<t.elapsed()<<endl;
+			cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
+		//printpointmeans(c,numeroVariables);
+		//imprimirkameans(a,data,numeroCluster);
 		}
 	//tie(c,a) = kmeansOP(data,numeroCluster,numeroIT,epsilon,0,c,60);
 	//printpointmeans(c,numeroVariables);

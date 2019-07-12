@@ -18,7 +18,7 @@ inline double square(double value){
 	return value * value;
 }
 
-inline double squared_12_distance(const Point first,const Point second){
+inline double squared_12_distance(const Point& first,const Point& second){
 	double d = 0.0;
 	for(size_t dim = 0; dim < first.size();dim++){
 		d += square(first[dim]-second[dim]);
@@ -155,19 +155,19 @@ int main(){
 	//cout << "ingrese epsilon de convergencia ej(0.1)"<<endl;
 	//cin >> epsilon;
 
-	dataset= "iris.data";
-	numeroVariables = 4;
-	numeroCluster = 3;
+	dataset= "arrhythmia.dat";
+	numeroVariables = 279;
+	numeroCluster = 13;
 	numeroIT = 1000;
 	epsilon = 0.001;
 
 	DataFrame data = readData(dataset,numeroVariables);
-	DataFrame means = readData("irisMeans",numeroVariables);
+	DataFrame means = readData("arrhythmiaMeans",numeroVariables);
 	DataFrame c;
 	vector<size_t> a;
 	
 		ofstream archivo;
-		archivo.open("tiemposkmeansiris.csv",ios::out);
+		archivo.open("tiemposkmeansoptimizado.csv",ios::out);
 		if(archivo.fail()){
 			cout<<"error"<<endl;
 			exit(1);
