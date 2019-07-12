@@ -12,8 +12,9 @@ def remplazarCaracter(File,car1,car2):
 		file.write(remplazo)
 
 
+
 def main():
-	remplazarCaracter("arrhythmia.dat",'?','0')
+	remplazarCaracter("dataset3.data",',','.')
 
 
 

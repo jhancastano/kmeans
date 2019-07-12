@@ -25,7 +25,10 @@ inline double squared_12_distance(const Point first,const Point second){
 	return d;
 }
 
-pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t number_of_iterations, double ep){
+
+
+
+pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t number_of_iterations, double ep,const int empty, const DataFrame Imeans){
 	size_t dimensions = data[0].size();
 	static random_device seed;
 	static mt19937 random_number_generator(seed());
@@ -36,10 +39,15 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 	int contador = 0;
 	size_t epsilon = numeric_limits<size_t>::max();
 //------------------asignacion de primeros cluster--------------------------	
+	if(empty == 0){
 	for (Point& cluster : means){ // cluster -> means
 		size_t i = indices(random_number_generator);
-		cluster = data[i];//data rango i nvariable tener en cuenta ultimo rango y primero		
-		}
+		cluster = data[i];//cluster inicial		
+		}}
+	if(empty == 1){
+		means = Imeans;
+	}
+
 	vector<size_t> assignments(data.size());
 	
 //--------------------------ciclo de kmeans-------------------------------
@@ -131,6 +139,35 @@ void imprimirkameans(vector<size_t> m,DataFrame data,int k){
 }
 
 
+pair<DataFrame,vector<size_t>> kmeansOP( const DataFrame& data, size_t k, size_t number_of_iterations, double ep,const int empty, const DataFrame Imeans,int porcentaje){
+	size_t dimensions = data[0].size();
+	int DataAUX = data.size()*porcentaje/100;
+	static random_device seed;
+	static mt19937 random_number_generator(seed());
+	uniform_int_distribution<size_t> indices(0,data.size()-1);/// change		  
+	DataFrame datos(DataAUX,vector<double>(dimensions,0.0));
+
+	for(int i=0;i<DataAUX;i++){
+		size_t j = indices(random_number_generator);
+		datos[i] = data[j];
+	}
+	DataFrame c;
+	vector<size_t> a;
+	tie(c,a) = k_means(datos,k,number_of_iterations,ep,0,datos);
+	tie(c,a) = k_means(data,k,number_of_iterations,ep,1,c);
+	return{c,a};
+
+}
+void printpointmeans(DataFrame means,int nVariables){
+	for(int i=0;i<means.size();i++ ){
+		cout<<'(';
+		for(int j=0;j<nVariables;j++)
+			cout << means[i][j]<<',';
+		cout <<')'<<endl;
+	}
+}
+
+
 int main(){
 	// main
 	string dataset;
@@ -149,19 +186,23 @@ int main(){
 	//cin >> numeroIT;
 	//cout << "ingrese epsilon de convergencia ej(0.1)"<<endl;
 	//cin >> epsilon;
-	dataset= "arrhythmia.dat";
-	numeroVariables = 279;
-	numeroCluster = 16;
-	numeroIT = 10000;
-	epsilon = 0.1;
+	dataset= "dataset3.data";
+	numeroVariables = 4;
+	numeroCluster = 4;
+	numeroIT = 1000;
+	epsilon = 0.000000000001;
 
 	DataFrame data = readData(dataset,numeroVariables);
 	DataFrame c;
 	vector<size_t> a;
 	ScopedTimer t;
-	tie(c,a) = k_means(data,numeroCluster,numeroIT,epsilon);
+
+	tie(c,a) = kmeansOP(data,numeroCluster,numeroIT,epsilon,0,c,50);
+	//tie(c,a) = k_means(data,numeroCluster,numeroIT,epsilon,0,c);
 	cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
-	imprimirkameans(a,data,numeroCluster);
+	printpointmeans(c,numeroVariables);
+
+	//imprimirkameans(a,data,numeroCluster);
 	
 	return 0;
 
