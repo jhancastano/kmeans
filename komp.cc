@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <omp.h>
 
 using namespace std;
 
@@ -44,17 +45,14 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 		size_t i = indices(random_number_generator);
 		cluster = data[i];//cluster inicial		
 		}}
-	if(empty == 1){
+	if(empty == 1)
 		means = Imeans;
-	}
-
 	vector<size_t> assignments(data.size());
 	
 //--------------------------ciclo de kmeans-------------------------------
-	//#pragma omp parallel for
 	for(size_t iteration = 0; iteration < number_of_iterations; ++iteration){
-		// find assignements ---- con este for da mejor tiempo
-		#pragma omp parallel for 
+		// find assignements ---- 
+		#pragma omp parallel for num_threads(8)
 		for (size_t point = 0; point < data.size() ; ++point){
 			double best_distance = numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
 			size_t best_cluster = 0; // variable mejor cluster, inicializada con 0
@@ -108,6 +106,22 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 	return {means, assignments};
 }
 
+void writen(DataFrame data,string nombre){
+	ofstream archivo;
+	archivo.open(nombre,ios::out);
+	if(archivo.fail()){
+		cout<<"error"<<endl;
+		exit(1);
+	}
+	for(int i=0;i< data.size();++i){
+		for(int j=0; j<data[i].size();++j){
+			archivo << data[i][j]<<' ';
+			}
+		archivo<<endl;
+	}
+	archivo.close();
+}
+
 
 DataFrame readData(string File,int nVariables ){
 	DataFrame data;
@@ -138,9 +152,18 @@ void imprimirkameans(vector<size_t> m,DataFrame data,int k){
   		}
 }
 
+void printpointmeans(DataFrame means,int nVariables){
+	for(int i=0;i<means.size();i++ ){
+		cout<<'(';
+		for(int j=0;j<nVariables;j++)
+			cout << means[i][j]<<',';
+		cout <<')'<<endl;
+	}
+}
+
 
 pair<DataFrame,vector<size_t>> kmeansOP( const DataFrame& data, size_t k, size_t number_of_iterations, double ep,const int empty, const DataFrame Imeans,int porcentaje){
-	size_t dimensions = data[0].size();
+	int dimensions = data[0].size();
 	int DataAUX = data.size()*porcentaje/100;
 	static random_device seed;
 	static mt19937 random_number_generator(seed());
@@ -154,18 +177,15 @@ pair<DataFrame,vector<size_t>> kmeansOP( const DataFrame& data, size_t k, size_t
 	DataFrame c;
 	vector<size_t> a;
 	tie(c,a) = k_means(datos,k,number_of_iterations,ep,0,datos);
+	//imprimirkameans(a,data,numeroCluster)
+	//printpointmeans(c,dimensions);
+	//printpointmeans(c,2);
+	//writen(c,"arrhythmiaMeans");
 	tie(c,a) = k_means(data,k,number_of_iterations,ep,1,c);
 	return{c,a};
 
 }
-void printpointmeans(DataFrame means,int nVariables){
-	for(int i=0;i<means.size();i++ ){
-		cout<<'(';
-		for(int j=0;j<nVariables;j++)
-			cout << means[i][j]<<',';
-		cout <<')'<<endl;
-	}
-}
+
 
 
 int main(){
@@ -186,22 +206,31 @@ int main(){
 	//cin >> numeroIT;
 	//cout << "ingrese epsilon de convergencia ej(0.1)"<<endl;
 	//cin >> epsilon;
-	dataset= "dataset3.data";
-	numeroVariables = 4;
-	numeroCluster = 4;
+	dataset= "arrhythmia.dat";
+	numeroVariables = 279;
+	numeroCluster = 13;
 	numeroIT = 1000;
-	epsilon = 0.000000000001;
+	epsilon = 0.001;
 
 	DataFrame data = readData(dataset,numeroVariables);
+	DataFrame means = readData("arrhythmiaMeans",numeroVariables);
 	DataFrame c;
 	vector<size_t> a;
-	ScopedTimer t;
-
-	tie(c,a) = kmeansOP(data,numeroCluster,numeroIT,epsilon,0,c,50);
-	//tie(c,a) = k_means(data,numeroCluster,numeroIT,epsilon,0,c);
-	cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
-	printpointmeans(c,numeroVariables);
-
+	
+		ofstream archivo;
+		archivo.open("tiemposkomp8hilos.csv",ios::out);
+		if(archivo.fail()){
+			cout<<"error"<<endl;
+			exit(1);
+		}
+		for(int i=0;i<100;i++){
+			ScopedTimer t;
+			tie(c,a) = k_means(data,numeroCluster,numeroIT,epsilon,1,means);
+			archivo<<t.elapsed()<<endl;
+			//cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
+		}
+	//tie(c,a) = kmeansOP(data,numeroCluster,numeroIT,epsilon,0,c,60);
+	//printpointmeans(c,numeroVariables);
 	//imprimirkameans(a,data,numeroCluster);
 	
 	return 0;

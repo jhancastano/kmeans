@@ -26,7 +26,7 @@ inline double squared_12_distance(const Point first,const Point second){
 	return d;
 }
 
-pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t number_of_iterations, double ep){
+pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t number_of_iterations, double ep, const int empty, const DataFrame Imeans){
 	size_t dimensions = data[0].size();
 	static random_device seed;
 	static mt19937 random_number_generator(seed());
@@ -37,14 +37,16 @@ pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t 
 	int contador = 0;
 	size_t epsilon = numeric_limits<size_t>::max();
 //------------------asignacion de primeros cluster--------------------------	
+	if(empty == 0){
 	for (Point& cluster : means){ // cluster -> means
 		size_t i = indices(random_number_generator);
-		cluster = data[i];//data rango i nvariable tener en cuenta ultimo rango y primero		
-		}
+		cluster = data[i];//cluster inicial		
+		}}
+	if(empty == 1)
+		means = Imeans;
+
 	vector<size_t> assignments(data.size());
-	
 //--------------------------ciclo de kmeans-------------------------------
-	//#pragma omp parallel for
 	for(size_t iteration = 0; iteration < number_of_iterations; ++iteration){
 		// find assignements ---- con este for da mejor tiempo
 		//#pragma omp parallel for 
@@ -157,20 +159,33 @@ int main(){
 	numeroVariables = 4;
 	numeroCluster = 3;
 	numeroIT = 1000;
-	epsilon = 0.0;
-
+	epsilon = 0.001;
 
 	DataFrame data = readData(dataset,numeroVariables);
-	//cout << data.size() << endl;
+	DataFrame means = readData("irisMeans",numeroVariables);
 	DataFrame c;
 	vector<size_t> a;
-	ScopedTimer t;
-	tie(c,a) = k_means(data,numeroCluster,numeroIT,epsilon);
-	cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
-	//imprimirkameans(a,data,numeroCluster);
+	
+		ofstream archivo;
+		archivo.open("tiemposkmeansiris.csv",ios::out);
+		if(archivo.fail()){
+			cout<<"error"<<endl;
+			exit(1);
+		}
+		for(int i=0;i<100;i++){
+			ScopedTimer t;
+			tie(c,a) = k_means(data,numeroCluster,numeroIT,epsilon,1,means);
+			archivo<<t.elapsed()<<endl;
+			//cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
+		}
+	
 
-	//cout<<"------>:" <<c.size()<<endl;
-	printkmeans(c,numeroVariables);
+	//tie(c,a) = kmeansOP(data,numeroCluster,numeroIT,epsilon,0,c,60);
+	//tie(c,a) = k_means(data,numeroCluster,numeroIT,epsilon,1,means);
+	//cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
+	//printpointmeans(c,numeroVariables);
+	//imprimirkameans(a,data,numeroCluster);
+	
 
 	return 0;
 

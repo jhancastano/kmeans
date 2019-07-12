@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <omp.h>
 
 using namespace std;
 
@@ -34,7 +35,7 @@ inline double squared_12_distance(const DataFrame first,const int firstpoint, co
 }
 
 // returna Dataframe,vector kmeans(data,nCluster,nIteraciones,nVariables,epsilon) 
-pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_t number_of_iterations,size_t nVariables, double ep){
+pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_t number_of_iterations,size_t nVariables, double ep,const int empty, const DataFrame Imeans){
 	size_t dimensions = nVariables;
 	// en proximo codigo colocar data.size/nvariables		   
 	static random_device seed;
@@ -45,16 +46,21 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 	double distanciaepsilon;
 	int contador = 0;
 	size_t epsilon = numeric_limits<size_t>::max();
+	//----------primeros means------------------------
+	if(empty == 0){
 	for(int y=0; y < k; y++ ){
 		size_t i = indices(random_number_generator);
 		for(int x=0;x < nVariables ;++x){
 			means[y*nVariables+x] = data[i*nVariables+x];
 		}
-	}
-
+	}}
+	if(empty == 1)
+		means = Imeans;
+	//---------------------------------------------
 	vector<size_t> assignments(data.size()/nVariables);
 	for(size_t iteration = 0; iteration < number_of_iterations; ++iteration){
 		// find assignements
+		#pragma omp parallel for
 		for (size_t point = 0; point < data.size()/nVariables ; ++point){
 			double best_distance = numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
 			size_t best_cluster = 0; // variable mejor cluster, inicializada con 0
@@ -159,25 +165,44 @@ int main(){
 	//cin >> numeroIT;
 	//cout << "ingrese epsilon de convergencia ej(0.1)"<<endl;
 	//cin >> epsilon;
+	
+
 
 	dataset= "iris.data";
-	numeroVariables =4;
+	numeroVariables = 4;
 	numeroCluster = 3;
 	numeroIT = 1000;
-	epsilon = 0.0;
-
+	epsilon = 0.001;
 
 	DataFrame data = readData(dataset,numeroVariables);
+	DataFrame means = readData("irisMeans",numeroVariables);
 	DataFrame c;
 	vector<size_t> a;
+	
+		ofstream archivo;
+		archivo.open("tiemposkmeansvectorpiris.csv",ios::out);
+		if(archivo.fail()){
+			cout<<"error"<<endl;
+			exit(1);
+		}
+		for(int i=0;i<100;i++){
+			ScopedTimer t;
+			tie(c,a) = k_means(data,numeroCluster,numeroIT,numeroVariables,epsilon,1,means);
+			archivo<<t.elapsed()<<endl;
+			//cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
+		}
+	
 
-	ScopedTimer t;
+
+
+
+	//ScopedTimer t;
 	//kmeans(data,nCluster,nIteraciones,nVariables,epsilon)
-	tie(c,a) = k_means(data,numeroCluster,numeroIT,numeroVariables,epsilon);
-	cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
+	//tie(c,a) = k_means(data,numeroCluster,numeroIT,numeroVariables,epsilon,1,means);
+	//cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
 
-	imprimirkameans(a,numeroCluster);
-	printmens(c,numeroVariables);
+	//imprimirkameans(a,numeroCluster);
+	//printmens(c,numeroVariables);
 	
 	return 0;
 
