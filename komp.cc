@@ -1,3 +1,4 @@
+//clang++ -std=c++11 -O3 -o d -Xpreprocessor -fopenmp -lomp komp.cc
 #include "timer.hh"
 #include <tuple>
 #include <string>
@@ -25,9 +26,6 @@ inline double squared_12_distance(const Point& first,const Point& second){
 	}
 	return d;
 }
-
-
-
 
 pair<DataFrame,vector<size_t>> k_means( const DataFrame& data, size_t k, size_t number_of_iterations, double ep,const int empty, const DataFrame Imeans){
 	size_t dimensions = data[0].size();
@@ -188,45 +186,50 @@ int main(){
 	int numeroCluster;
 	int numeroIT;
 	double epsilon;
-
-	//cout << "ingrese nombre dataset"<<endl;
-	//cin >>dataset;
-	//cout << "ingrese numero variables dataset"<<endl;
-	//cin >> numeroVariables;
-	//cout << "ingrese numero de cluster o k"<<endl;
-	//cin >> numeroCluster;
-	//cout << "ingrese numero de iteraciones"<<endl;
-	//cin >> numeroIT;
-	//cout << "ingrese epsilon de convergencia ej(0.1)"<<endl;
-	//cin >> epsilon;
-	dataset= "DATASETS/arrhythmia.dat";
-	numeroVariables = 279;
-	numeroCluster = 13;
-	numeroIT = 1000;
-	epsilon = 0.001;
+	int porcent;
+	cout << "ingrese nombre dataset"<<endl;
+	cin >>dataset;
+	cout << "ingrese numero variables dataset"<<endl;
+	cin >> numeroVariables;
+	cout << "ingrese numero de cluster o k"<<endl;
+	cin >> numeroCluster;
+	cout << "ingrese numero de iteraciones"<<endl;
+	cin >> numeroIT;
+	cout << "ingrese epsilon de convergencia ej(0.1)"<<endl;
+	cin >> epsilon;
+	cout << "ingrese porcentaje para kameans optimizado(ej 1-90) "<<endl;
+	cin >> porcent;
+	//dataset= "DATASETS/arrhythmia.dat";
+	//numeroVariables = 279;
+	//numeroCluster = 13;
+	//numeroIT = 1000;
+	//epsilon = 0.001;
 
 	DataFrame data = readData(dataset,numeroVariables);
-	DataFrame means = readData("DATASETS/arrhythmiaMeans",numeroVariables);
+	//DataFrame means = readData("DATASETS/arrhythmiaMeans",numeroVariables);
 	DataFrame c;
 	vector<size_t> a;
-	
-		ofstream archivo;
-		archivo.open("tkomp16.csv",ios::out);
-		if(archivo.fail()){
-			cout<<"error"<<endl;
-			exit(1);
-		}
-		for(int i=0;i<100;i++){
-			ScopedTimer t;
-			tie(c,a) = k_means(data,numeroCluster,numeroIT,epsilon,1,means);
-			archivo<<t.elapsed()<<endl;
+		//ofstream archivo;
+		//archivo.open("tkomp16.csv",ios::out);
+		//if(archivo.fail()){
+		//	cout<<"error"<<endl;
+		//	exit(1);
+		//}
+		//for(int i=0;i<100;i++){
 			//cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
 		//printpointmeans(c,numeroVariables);
 		//imprimirkameans(a,data,numeroCluster);
-		}
-	//tie(c,a) = kmeansOP(data,numeroCluster,numeroIT,epsilon,0,c,60);
+		//}
+			//ScopedTimer t;
+			//tie(c,a) = k_means(data,numeroCluster,numeroIT,epsilon,0,c);
+			//archivo<<t.elapsed()<<endl;
+		
+	ScopedTimer t;
+	tie(c,a) = kmeansOP(data,numeroCluster,numeroIT,epsilon,0,c,porcent);
+	cout<<t.elapsed()<<"ms"<<endl;
+
 	//printpointmeans(c,numeroVariables);
-	//imprimirkameans(a,data,numeroCluster);
+	imprimirkameans(a,data,numeroCluster);
 	
 	return 0;
 
