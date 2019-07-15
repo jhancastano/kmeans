@@ -58,7 +58,10 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 		means = Imeans;
 	//---------------------------------------------
 	vector<size_t> assignments(data.size()/nVariables);
-	for(size_t iteration = 0; iteration < number_of_iterations; ++iteration){
+
+
+	size_t iteration = 0;
+	while( (iteration<number_of_iterations) && (contador != k)){
 		// find assignements
 		#pragma omp parallel for
 		for (size_t point = 0; point < data.size()/nVariables ; ++point){
@@ -84,9 +87,6 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 			counts[cluster] += 1;
 		}
 		// divide sumas por saltos para obtener centroides
-		if(contador == k ){
-			return {means, assignments};
-			}
 		contador = 0;
 
 		for (size_t cluster = 0; cluster < k; ++cluster){
@@ -96,13 +96,10 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 				means[cluster*nVariables + d] = new_means[cluster * nVariables + d] / count;
 			}
 			distanciaepsilon = squared_12_distance(new_meansaux,cluster,means,cluster,nVariables);
-			if(distanciaepsilon < ep){
+			if(distanciaepsilon < ep)
 				contador++;
-				}
-			if(distanciaepsilon > ep){
-				contador--;
-				}
 			}
+			++iteration;
 		
 	}
 	return {means, assignments};
@@ -168,14 +165,14 @@ int main(){
 	
 
 
-	dataset= "iris.data";
-	numeroVariables = 4;
-	numeroCluster = 3;
-	numeroIT = 1000;
+	dataset= "DATASETS/arrhythmia.dat";
+	numeroVariables = 279;
+	numeroCluster = 13;
+	numeroIT = 10;
 	epsilon = 0.001;
 
 	DataFrame data = readData(dataset,numeroVariables);
-	DataFrame means = readData("irisMeans",numeroVariables);
+	DataFrame means = readData("DATASETS/arrhythmiaMeans",numeroVariables);
 	DataFrame c;
 	vector<size_t> a;
 	
@@ -185,7 +182,7 @@ int main(){
 			cout<<"error"<<endl;
 			exit(1);
 		}
-		for(int i=0;i<100;i++){
+		for(int i=0;i<1;i++){
 			ScopedTimer t;
 			tie(c,a) = k_means(data,numeroCluster,numeroIT,numeroVariables,epsilon,1,means);
 			archivo<<t.elapsed()<<endl;

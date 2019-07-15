@@ -45,10 +45,9 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 	vector<size_t> assignments(data.size()/nVariables);
 	
 	//#pragma omp parallel for
-	for(size_t iteration = 0; iteration < number_of_iterations; ++iteration){
-		if(ep > epsilon ){
-			iteration = number_of_iterations + 1;
-		}
+	size_t iteration = 0;
+	while( (iteration<number_of_iterations) && (contador != k)){
+		
 		// find assignements
 		for (size_t point = 0; point < data.size()/nVariables ; ++point){
 			double best_distance = numeric_limits<double>::max();// variable mejor distacia, inicializada con la maxima
@@ -76,6 +75,7 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 		}
 		// divide sumas por saltos para obtener centroides
 		//#pragma omp parallel for
+		contador = 0;
 		for (size_t cluster = 0; cluster < k; ++cluster){
 			const size_t count = max<size_t>(1, counts[cluster]);
 			for(size_t d = 0; d < dimensions;d++){
@@ -86,15 +86,8 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 			if(distanciaepsilon < ep){
 				contador++;
 				}
-			if(distanciaepsilon > ep){
-				contador --;
-				}
 			}
-		if(contador == k ){
-			 
-			return {means, assignments};
-			}
-		contador = 0;
+		
 	}
 	return {means, assignments};
 }

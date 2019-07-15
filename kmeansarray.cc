@@ -13,13 +13,10 @@ using namespace std;
 using DataFrame = vector<double>;
 
 inline int esmultiplo(int numero,int nVariables){
-	if(nVariables%numero == 0){
+	if(nVariables%numero == 0)
 		return 1;
-	}
-	else{
+	else
 		return 0;
-	}
-
 }
 
 inline double square(double value){
@@ -58,7 +55,10 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 		means = Imeans;
 	//---------------------------------------------
 	vector<size_t> assignments(data.size()/nVariables);
-	for(size_t iteration = 0; iteration < number_of_iterations; ++iteration){
+
+
+	size_t iteration = 0;
+	while( (iteration<number_of_iterations) && (contador != k)){
 		// find assignements
 		#pragma omp parallel for
 		for (size_t point=0;point<data.size()/nVariables;++point){
@@ -84,9 +84,7 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 			counts[cluster] += 1;
 		}
 		// divide sumas por saltos para obtener centroides
-		if(contador == k ){
-			return {means, assignments};
-			}
+
 		contador = 0;
 
 		for (size_t cluster = 0; cluster < k; ++cluster){
@@ -96,12 +94,8 @@ pair< DataFrame,vector<size_t> > k_means( const DataFrame& data, size_t k, size_
 				means[cluster*nVariables + d] = new_means[cluster * nVariables + d] / count;
 			}
 			distanciaepsilon = squared_12_distance(new_meansaux,cluster,means,cluster,nVariables);
-			if(distanciaepsilon < ep){
+			if(distanciaepsilon < ep)
 				contador++;
-				}
-			if(distanciaepsilon > ep){
-				contador--;
-				}
 			}
 		
 	}
@@ -168,35 +162,31 @@ int main(){
 	
 
 
-	dataset= "arrhythmia.dat";
+	dataset= "DATASETS/arrhythmia.dat";
 	numeroVariables = 279;
-	numeroCluster = 40;
+	numeroCluster = 13;
 	numeroIT = 1000;
 	epsilon = 0.001;
 
 	DataFrame data = readData(dataset,numeroVariables);
-	DataFrame means = readData("arrhythmiaMeans",numeroVariables);
+	DataFrame means = readData("DATASETS/arrhythmiaMeans",numeroVariables);
 	DataFrame c;
 	vector<size_t> a;
 	
-		//ofstream archivo;
-		//archivo.open("tiemposkmeansarray.csv",ios::out);
-		//if(archivo.fail()){
-		//	cout<<"error"<<endl;
-		//	exit(1);
-		//}
-		for(int i=0;i<10;i++){
+		ofstream archivo;
+		archivo.open("tkmeansarray.csv",ios::out);
+		if(archivo.fail()){
+			cout<<"error"<<endl;
+			exit(1);
+			}
+		for(int i=0;i<100;i++){
 			ScopedTimer t;
-			tie(c,a) = k_means(data,numeroCluster,numeroIT,numeroVariables,epsilon,0,means);
-			//archivo<<t.elapsed()<<endl;
-			cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
+			tie(c,a) = k_means(data,numeroCluster,numeroIT,numeroVariables,epsilon,1,means);
+			archivo<<t.elapsed()<<endl;
+			//cout <<  " tiempo : " << t.elapsed()<< "ms" << endl;
 			//printmens(c,numeroVariables);
 			//imprimirkameans(a,numeroCluster);
 		}
-	
-
-
-
 
 	//ScopedTimer t;
 	//kmeans(data,nCluster,nIteraciones,nVariables,epsilon)
